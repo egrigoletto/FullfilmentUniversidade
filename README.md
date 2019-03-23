@@ -1,7 +1,5 @@
 # Bot de exemplo para o DialogFlow
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 7.1.1.
-
 ## Informações
 
 Aqui apenas constam os dados referentes ao Fullfilment baseado na conversação de exemplo do dialogflow, informações sobre os agente utilizados serão acrescentadas em futuras versões.
