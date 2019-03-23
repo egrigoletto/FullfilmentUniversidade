@@ -5,7 +5,15 @@
 const functions = require('firebase-functions');
 const {WebhookClient} = require('dialogflow-fulfillment');
 const {Card, Suggestion} = require('dialogflow-fulfillment');
- 
+//banco de dados firebase
+const admin = require('firebase-admin');
+admin.initializeApp({
+    //credenciais de acesso ao banco de dados
+    credential: admin.credential.applicationDefault(),
+    //url do banco
+    databaseURL: 'url do firebase',
+});
+
 process.env.DEBUG = 'dialogflow:debug'; // enables lib debugging statements
  
 exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, response) => {
@@ -13,65 +21,25 @@ exports.dialogflowFirebaseFulfillment = functions.https.onRequest((request, resp
   console.log('Dialogflow Request headers: ' + JSON.stringify(request.headers));
   console.log('Dialogflow Request body: ' + JSON.stringify(request.body));
  
-  function welcome(agent) {
-    agent.add(`Welcome to my agent!`);
-  }
- 
-  function fallback(agent) {
-    agent.add(`I didn't understand`);
-    agent.add(`I'm sorry, can you try again?`);
-  }
-  
    function agendamentoLb(agent){
-     var msg = "";
-     if (agent.parameters['tipo-laboratorio'].toLowerCase() == 'medicina'){
-       msg += 'Seu agendamento está confirmado! ;)\r';
-       msg += 'É obrigatório o uso do jaleco, não esqueça ok?';
-       agent.add(msg);
-       //agent.add('Seu agendamento está confirmado! ;)');
-       //agent.add('É obrigatório o uso do jaleco, não esqueça ok?');
-    } else if (agent.parameters['tipo-laboratorio'].toLowerCase() == 'biologia'){
-     agent.add('Seu agendamento está confirmado! ;)');
-     agent.add('Não fornecemos equipamentos de dissecação, traga seus bisturis e serras ok?');
-     agent.add('É obrigatório o uso do jaleco, não esqueça também');
-    } else if (agent.parameters['tipo-laboratorio'].toLowerCase() == 'quimica'){
-   	  agent.add('Seu agendamento está confirmado! ;)');
-      agent.add('Por favor, não exploda nada, nem perca um olho.');
-    }
+     //inclui itens no banco de dados 
+     var newKey = admin.database().ref('lista-agendamento').push().key;
+    
+     //função set para incluir itens no banco de dados
+     //new key cria uma chave para itens únicos no banco(chave primária)
+     //set coloca os parâmetros no banco  que vem do agente
+     admin.database().ref('lista-agendamento/'+newKey).set({
+         //campos da tabela nosql
+       	 ra: agent.parameters['ra-aluno'],
+         //nome: agent.parameters['nome-aluno'],
+         data: agent.parameters['data-agendamento'],
+         curso: agent.parameters['nome-curso'],
+         laboratorio: agent.parameters['tipo-laboratorio']
+     });
+     agent.add('Seu agendamento foi incluído com sucesso!\n Aguardamos sua visita 😃 ');
  }
-  // // Uncomment and edit to make your own intent handler
-  // // uncomment `intentMap.set('your intent name here', yourFunctionHandler);`
-  // // below to get this function to be run when a Dialogflow intent is matched
-  // function yourFunctionHandler(agent) {
-  //   agent.add(`This message is from Dialogflow's Cloud Functions for Firebase editor!`);
-  //   agent.add(new Card({
-  //       title: `Title: this is a card title`,
-  //       imageUrl: 'https://developers.google.com/actions/images/badges/XPM_BADGING_GoogleAssistant_VER.png',
-  //       text: `This is the body text of a card.  You can even use line\n  breaks and emoji! 💁`,
-  //       buttonText: 'This is a button',
-  //       buttonUrl: 'https://assistant.google.com/'
-  //     })
-  //   );
-  //   agent.add(new Suggestion(`Quick Reply`));
-  //   agent.add(new Suggestion(`Suggestion`));
-  //   agent.setContext({ name: 'weather', lifespan: 2, parameters: { city: 'Rome' }});
-  // }
-
-  // // Uncomment and edit to make your own Google Assistant intent handler
-  // // uncomment `intentMap.set('your intent name here', googleAssistantHandler);`
-  // // below to get this function to be run when a Dialogflow intent is matched
-  // function googleAssistantHandler(agent) {
-  //   let conv = agent.conv(); // Get Actions on Google library conv instance
-  //   conv.ask('Hello from the Actions on Google client library!') // Use Actions on Google library
-  //   agent.add(conv); // Add Actions on Google library responses to your agent's response
-  // }
-  // // See https://github.com/dialogflow/dialogflow-fulfillment-nodejs/tree/master/samples/actions-on-google
-  // // for a complete Dialogflow fulfillment library Actions on Google client library v2 integration sample
-
   // Run the proper function handler based on the matched Dialogflow intent name
   let intentMap = new Map();
-  intentMap.set('Default Welcome Intent', welcome);
-  intentMap.set('Default Fallback Intent', fallback);
   // intentMap.set('your intent name here', yourFunctionHandler);
   // intentMap.set('your intent name here', googleAssistantHandler);
   //seguindo moldelo acima
